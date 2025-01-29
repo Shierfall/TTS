@@ -1,12 +1,13 @@
+import os
+import uvicorn
 from fastapi import FastAPI, Form
 from fastapi.responses import FileResponse
 from TTS.api import TTS
-import os
 
 app = FastAPI()
 
 # Load Coqui TTS Model
-tts = TTS("tts_models/en/ljspeech/tacotron2-DDC")  # Use a small model for better performance
+tts = TTS("tts_models/en/ljspeech/tacotron2-DDC")
 
 # Ensure output directory exists
 output_dir = "audio_outputs"
@@ -21,3 +22,7 @@ def synthesize_text(text: str = Form(...)):
 @app.get("/")
 def home():
     return {"message": "Coqui TTS Server is running on Render!"}
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
