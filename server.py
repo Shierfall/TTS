@@ -10,10 +10,7 @@ from pydantic import BaseModel
 app = FastAPI()
 
 # Configure CORS
-origins = [
-    "http://localhost:3000",
-    "https://your-frontend-domain.com",
-]
+origins = ["http://localhost:3000", "https://your-frontend-domain.com"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -53,6 +50,6 @@ def home():
     return {"message": "Coqui TTS Server is running!"}
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))
-    print(f"Starting FastAPI on port {port}...")  # ✅ Print the port for debugging
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    port = int(os.getenv("PORT", 8000))  # ✅ Make sure we use Render's PORT
+    print(f"FastAPI is starting on port {port}...")  # ✅ Debugging print
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
