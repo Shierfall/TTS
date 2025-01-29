@@ -11,10 +11,10 @@ function App() {
     setLoading(true);
     try {
       const response = await axios.post(
-        "https://your-app-name.onrender.com/synthesize",
+        "https://tts-l97q.onrender.com",
         new URLSearchParams({ text })
       );
-      setAudioUrl(response.request.responseURL);
+      setAudioUrl(response.request.responseURL); // Save the generated audio URL
     } catch (error) {
       console.error("Error generating speech:", error);
     }
@@ -39,6 +39,10 @@ function App() {
         <div>
           <h3>Generated Speech:</h3>
           <audio controls src={audioUrl}></audio>
+          <br />
+          <a href={audioUrl} download="speech.wav">
+            <button>Download Audio</button>
+          </a>
         </div>
       )}
     </div>
