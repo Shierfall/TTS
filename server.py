@@ -19,14 +19,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load Coqui TTS Model
-tts = TTS("tts_models/en/ljspeech/tacotron2-DDC")
+# Print debug line
+print("Starting server and loading TTS model...")
 
-# Define request schema
+# Load Coqui TTS Model (use a smaller model if needed)
+tts = TTS("tts_models/en/ljspeech/tacotron2-DDC")
+print("TTS model loaded.")
+
 class SynthesizeRequest(BaseModel):
     text: str
 
-MAX_TEXT_LENGTH = 1000  # Prevent large requests
+MAX_TEXT_LENGTH = 1000
 
 @app.post("/synthesize")
 async def synthesize_text(request: SynthesizeRequest):
@@ -48,8 +51,3 @@ async def synthesize_text(request: SynthesizeRequest):
 @app.get("/")
 def home():
     return {"message": "Coqui TTS Server is running!"}
-
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))  # ✅ Make sure we use Render's PORT
-    print(f"FastAPI is starting on port {port}...")  # ✅ Debugging print
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
