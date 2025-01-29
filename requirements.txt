@@ -1,4 +1,4 @@
-fastapi
-uvicorn
-TTS[all]
-pydantic
+fastapi==0.95.2
+uvicorn==0.22.0
+TTS[all]==0.22.0  # Ensure this version is compatible with your Python version
+pydantic==1.10.7
