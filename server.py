@@ -1,23 +1,17 @@
-# server.py
 import os
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from TTS.api import TTS
 import tempfile
+import soundfile as sf
 from pydantic import BaseModel
-import logging
-import asyncio
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Configure CORS
-origins = ["http://localhost:3000", "https://your-frontend-domain.com"]  # Update with your frontend domain
+# ✅ Enable CORS (Allows frontend to access the API)
+origins = ["*"]  # Allow all origins (update if needed)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -32,24 +26,6 @@ class SynthesizeRequest(BaseModel):
 
 MAX_TEXT_LENGTH = 1000  # Prevent large requests
 
-# Initialize TTS model as None for lazy loading
-tts = None
-tts_lock = asyncio.Lock()
-
-async def load_tts_model():
-    global tts
-    if tts is None:
-        async with tts_lock:
-            if tts is None:
-                logger.info("Loading TTS model...")
-                try:
-                    # Use a lightweight model
-                    tts = TTS("tts_models/en/ljspeech/glow-tts")
-                    logger.info("TTS model loaded successfully.")
-                except Exception as e:
-                    logger.error(f"Failed to load TTS model: {e}")
-                    raise
-
 @app.post("/synthesize")
 async def synthesize_text(request: SynthesizeRequest):
     text = request.text.strip()
@@ -59,24 +35,31 @@ async def synthesize_text(request: SynthesizeRequest):
         raise HTTPException(status_code=413, detail=f"Max length is {MAX_TEXT_LENGTH} characters.")
 
     try:
-        # Ensure the TTS model is loaded
-        await load_tts_model()
+        tts = TTS("tts_models/en/ljspeech/fast_pitch")
 
-        # Generate temporary file path
+        # Create temp file
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
             output_path = tmp_file.name
 
-        # Synthesize speech and save to file
+        # Generate speech
         tts.tts_to_file(text=text, file_path=output_path)
 
-        # Return the audio file
-        return FileResponse(path=output_path, media_type="audio/wav", filename="speech.wav")
-    except HTTPException:
-        raise  # Re-raise HTTP exceptions
+        # ✅ Debug: Check if the file is valid
+        data, samplerate = sf.read(output_path)
+        print(f"✅ WAV File Generated: {output_path}, Duration: {len(data) / samplerate:.2f} sec")
+
+        # ✅ Read file and return as binary response
+        with open(output_path, "rb") as audio_file:
+            return Response(audio_file.read(), media_type="audio/wav")
     except Exception as e:
-        logger.error(f"Error during synthesis: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error during synthesis.")
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Error during synthesis.")
 
 @app.get("/")
 def home():
     return {"message": "Coqui TTS Server is running!"}
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))  # ✅ Render uses dynamic ports
+    print(f"🚀 FastAPI running on port {port}...")
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
