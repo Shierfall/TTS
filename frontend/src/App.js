@@ -19,7 +19,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        "https://tts-l97q.onrender.com", // Corrected Endpoint
+        "https://tts-l97q.onrender.com/synthesize", // Corrected Endpoint
         { text }, // Sending JSON payload
         {
           responseType: "blob", // Expecting binary data
